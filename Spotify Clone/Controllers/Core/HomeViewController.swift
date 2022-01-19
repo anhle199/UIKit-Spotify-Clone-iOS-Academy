@@ -8,9 +8,9 @@
 import UIKit
 
 enum BrowseSectionType {
-    case newReleases
-    case featuredPlaylists
-    case recommendedTracks
+    case newReleases(viewModels: [NewReleaseCellViewModel])
+    case featuredPlaylists(viewModels: [FeaturedPlaylistCellViewModel])
+    case recommendedTracks(viewModels: [RecommendedTrackCellViewModel])
 }
 
 class HomeViewController: UIViewController {
@@ -35,6 +35,8 @@ class HomeViewController: UIViewController {
         
         return spinner
     }()
+    
+    private var sections = [BrowseSectionType]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -84,30 +86,123 @@ class HomeViewController: UIViewController {
     }
     
     private func fetchData() {
-        // New Releases
-        // Featured Playlists
-        // Recommendations
+        let group = DispatchGroup()
         
-//        APICaller.shared.getAvailableGenreSeeds { result in
-//            switch (result) {
-//            case .success(let model):
-//                let genres = model.genres
-//                var seedGenres = Set<String>()
-//
-//                while seedGenres.count < 5 {
-//                    if let random = genres.randomElement() {
-//                        seedGenres.insert(random)
-//                    }
-//                }
-//
-//                APICaller.shared.getRecommendations(genres: seedGenres) { _ in
-//
-//                }
-//
-//            case .failure(let error):
-//                break
-//            }
-//        }
+        var newReleasesResponse: NewReleasesResponse?
+        var featuredPlaylistsResponse: FeaturedPlaylistsResponse?
+        var recommendationsResponse: RecommendationsResponse?
+        
+        // New Releases
+        group.enter()
+        APICaller.shared.getNewReleases { result in
+            defer {
+                group.leave()
+            }
+            
+            switch (result) {
+            case .success(let model):
+                newReleasesResponse = model
+            case .failure(let error):
+                print("ERROR - getNewReleases: \(error.localizedDescription)")
+            }
+        }
+        
+        // Featured Playlists
+        group.enter()
+        APICaller.shared.getFeaturedPlaylists { result in
+            defer {
+                group.leave()
+            }
+            
+            switch (result) {
+            case .success(let model):
+                featuredPlaylistsResponse = model
+            case .failure(let error):
+                print("ERROR - getFeaturedPlaylists: \(error.localizedDescription)")
+            }
+        }
+        
+        // Recommendations
+        group.enter()
+        APICaller.shared.getAvailableGenreSeeds { result in
+            switch (result) {
+            case .success(let model):
+                let genres = model.genres
+                var seedGenres = Set<String>()
+
+                while seedGenres.count < 5 {
+                    if let random = genres.randomElement() {
+                        seedGenres.insert(random)
+                    }
+                }
+
+                APICaller.shared.getRecommendations(genres: seedGenres) { recommendedResult in
+                    defer {
+                        group.leave()
+                    }
+                    
+                    switch (recommendedResult) {
+                    case .success(let model):
+                        recommendationsResponse = model
+                    case .failure(let error):
+                        print("ERROR - getRecommendations: \(error.localizedDescription)")
+                    }
+                }
+
+            case .failure(let error):
+                print("ERROR - getAvailableGenreSeeds: \(error.localizedDescription)")
+            }
+        }
+        
+        group.notify(queue: .main) { [weak self] in
+            guard let newAlbums = newReleasesResponse?.albums.items,
+                  let playlists = featuredPlaylistsResponse?.playlists.items,
+                  let tracks = recommendationsResponse?.tracks
+            else {
+                return
+            }
+            
+            self?.configureModels(
+                newAlbums: newAlbums,
+                playlists: playlists,
+                tracks: tracks
+            )
+        }
+    }
+    
+    private func configureModels(
+        newAlbums: [Album],
+        playlists: [Playlist],
+        tracks: [AudioTrack]
+    ) {
+        
+        // NewReleaseCellViewModel
+        sections.append(.newReleases(
+            viewModels: newAlbums.compactMap { album in
+                return NewReleaseCellViewModel(
+                    name: album.name,
+                    arkworkURL: URL(string: album.images.first?.url ?? ""),
+                    numberOfTracks: album.total_tracks,
+                    artistName: album.artists.first?.name ?? "-"
+                )
+            }
+        ))
+        
+        // FeaturedPlaylistCellViewModel
+        sections.append(.featuredPlaylists(
+            viewModels: newAlbums.compactMap { playlist in
+            return FeaturedPlaylistCellViewModel()
+        }
+        ))
+        
+        // RecommendedTrackCellViewModel
+        sections.append(.recommendedTracks(
+            viewModels: newAlbums.compactMap { track in
+                return RecommendedTrackCellViewModel()
+            }
+        ))
+        
+        collectionView.reloadData()
     }
 
     @objc func didTapSettings(_ sender: UIBarButtonItem) {
@@ -286,28 +381,59 @@ extension HomeViewController {
 extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 5
+        let type = sections[section]
+        
+        switch type {
+        case .newReleases(let viewModels):
+            return viewModels.count
+        case .featuredPlaylists(let viewModels):
+            return viewModels.count
+        case .recommendedTracks(let viewModels):
+            return viewModels.count
+        }
     }
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 3
+        return sections.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath)
+        let type = sections[indexPath.section]
         
-        switch (indexPath.section) {
-        case 0:
-            cell.backgroundColor = .systemGreen
-        case 1:
-            cell.backgroundColor = .systemPink
-        case 2:
-            cell.backgroundColor = .systemBlue
-        default:
-            cell.backgroundColor = .systemYellow
+        switch type {
+        case .newReleases(let viewModels):
+            guard let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: NewReleaseCollectionViewCell.identifier,
+                for: indexPath
+            ) as? NewReleaseCollectionViewCell else {
+                return UICollectionViewCell()
+            }
+            
+            cell.configure(with: viewModels[indexPath.row])
+            return cell
+            
+        case .featuredPlaylists(_):
+            guard let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: FeaturedPlaylistCollectionViewCell.identifier,
+                for: indexPath
+            )  as? FeaturedPlaylistCollectionViewCell else {
+                return UICollectionViewCell()
+            }
+            
+            cell.backgroundColor = .blue
+            return cell
+            
+        case .recommendedTracks(_):
+            guard let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: RecommendedTrackCollectionViewCell.identifier,
+                for: indexPath
+            )  as? RecommendedTrackCollectionViewCell else {
+                return UICollectionViewCell()
+            }
+            
+            cell.backgroundColor = .orange
+            return cell
         }
-        
-        return cell
     }
     
 }

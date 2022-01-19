@@ -11,7 +11,6 @@ class SettingsViewController: UIViewController {
 
     let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
-        tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
         
         return tableView
@@ -30,7 +29,12 @@ class SettingsViewController: UIViewController {
         tableView.dataSource = self
         
         view.addSubview(tableView)
-        configureContrainsts()
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        tableView.frame = view.bounds
     }
 
     private func configureModels() {
@@ -67,14 +71,6 @@ class SettingsViewController: UIViewController {
         
     }
     
-    private func configureContrainsts() {
-        NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.topAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-        ])
-    }
 }
 
 
