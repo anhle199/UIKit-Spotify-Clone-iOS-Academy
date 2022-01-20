@@ -79,7 +79,7 @@ final class APICaller {
     ) {
         
         makeRequest(
-            with: URL(string: "\(Constants.baseAPIURL)/browse/featured-playlists?limit=50"),
+            with: URL(string: "\(Constants.baseAPIURL)/browse/featured-playlists?limit=20"),
             type: .GET
         ) { request in
         
@@ -113,7 +113,7 @@ final class APICaller {
         
         makeRequest(
             with: URL(
-                string: "\(Constants.baseAPIURL)/recommendations?seed_genres=\(seedGenres)&limit=2"
+                string: "\(Constants.baseAPIURL)/recommendations?seed_genres=\(seedGenres)&limit=20"
             ),
             type: .GET
         ) { request in

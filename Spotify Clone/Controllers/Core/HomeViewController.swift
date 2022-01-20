@@ -190,18 +190,27 @@ class HomeViewController: UIViewController {
         
         // FeaturedPlaylistCellViewModel
         sections.append(.featuredPlaylists(
-            viewModels: newAlbums.compactMap { playlist in
-            return FeaturedPlaylistCellViewModel()
-        }
+            viewModels: playlists.compactMap { playlist in
+                return FeaturedPlaylistCellViewModel(
+                    name: playlist.name,
+                    artworkURL: URL(string: playlist.images.first?.url ?? ""),
+                    creatorName: playlist.owner.display_name
+                )
+            }
         ))
         
         // RecommendedTrackCellViewModel
         sections.append(.recommendedTracks(
-            viewModels: newAlbums.compactMap { track in
-                return RecommendedTrackCellViewModel()
+            viewModels: tracks.compactMap { track in
+                return RecommendedTrackCellViewModel(
+                    name: track.name,
+                    artworkURL: URL(string: track.album.images.first?.url ?? ""),
+                    artistName: track.artists.first?.name ?? "-"
+                )
             }
         ))
         
+        // Trigger colectionView to reload data
         collectionView.reloadData()
     }
 
@@ -253,7 +262,7 @@ extension HomeViewController {
         )
         
         item.contentInsets = NSDirectionalEdgeInsets(
-            top: 2, leading: 2, bottom: 2, trailing: 2
+            top: 4, leading: 2, bottom: 2, trailing: 4
         )
         
         // Group
@@ -291,7 +300,7 @@ extension HomeViewController {
         )
         
         item.contentInsets = NSDirectionalEdgeInsets(
-            top: 2, leading: 2, bottom: 2, trailing: 2
+            top: 4, leading: 2, bottom: 2, trailing: 4
         )
         
         // Group
@@ -347,7 +356,7 @@ extension HomeViewController {
         )
         
         item.contentInsets = NSDirectionalEdgeInsets(
-            top: 2, leading: 2, bottom: 2, trailing: 2
+            top: 4, leading: 2, bottom: 2, trailing: 4
         )
     
         // Group
@@ -412,7 +421,7 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
             cell.configure(with: viewModels[indexPath.row])
             return cell
             
-        case .featuredPlaylists(_):
+        case .featuredPlaylists(let viewModels):
             guard let cell = collectionView.dequeueReusableCell(
                 withReuseIdentifier: FeaturedPlaylistCollectionViewCell.identifier,
                 for: indexPath
@@ -420,10 +429,10 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
                 return UICollectionViewCell()
             }
             
-            cell.backgroundColor = .blue
+            cell.configure(with: viewModels[indexPath.row])
             return cell
             
-        case .recommendedTracks(_):
+        case .recommendedTracks(let viewModels):
             guard let cell = collectionView.dequeueReusableCell(
                 withReuseIdentifier: RecommendedTrackCollectionViewCell.identifier,
                 for: indexPath
@@ -431,7 +440,7 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
                 return UICollectionViewCell()
             }
             
-            cell.backgroundColor = .orange
+            cell.configure(with: viewModels[indexPath.row])
             return cell
         }
     }

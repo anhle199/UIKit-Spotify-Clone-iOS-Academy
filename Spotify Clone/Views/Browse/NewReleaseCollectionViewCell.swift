@@ -9,12 +9,13 @@ import UIKit
 import SDWebImage
 
 class NewReleaseCollectionViewCell: UICollectionViewCell {
+    
     static let identifier = "NewReleaseCollectionViewCell"
     
     private let albumCoverImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(systemName: "photo")
-        imageView.contentMode = .scaleAspectFill
+        imageView.contentMode = .scaleAspectFit
         imageView.layer.masksToBounds = true
         imageView.layer.cornerRadius = 5
         
@@ -23,7 +24,7 @@ class NewReleaseCollectionViewCell: UICollectionViewCell {
     
     private let albumNameLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 22, weight: .semibold)
+        label.font = .systemFont(ofSize: 20, weight: .semibold)
         label.numberOfLines = 0
         
         return label
@@ -49,6 +50,7 @@ class NewReleaseCollectionViewCell: UICollectionViewCell {
         super.init(frame: frame)
         
         contentView.layer.cornerRadius = 8
+        contentView.clipsToBounds = true
         contentView.backgroundColor = .secondarySystemBackground
         
         contentView.addSubview(albumCoverImageView)
@@ -106,6 +108,7 @@ class NewReleaseCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
+        
         albumCoverImageView.image = nil
         albumNameLabel.text = nil
         artistNameLabel.text = nil

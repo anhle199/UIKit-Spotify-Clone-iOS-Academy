@@ -91,7 +91,7 @@ class ProfileViewController: UIViewController {
         if let urlString = urlString, let url = URL(string: urlString) {
             imageView.sd_setImage(with: url, completed: nil)
         } else {
-            imageView.image = UIImage(named: "DefaultAvatar")
+            imageView.image = UIImage(systemName: "photo")
         }
         
         tableView.tableHeaderView = headerView
