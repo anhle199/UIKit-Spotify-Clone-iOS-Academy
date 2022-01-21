@@ -269,7 +269,7 @@ extension HomeViewController {
         )
         
         item.contentInsets = NSDirectionalEdgeInsets(
-            top: 4, leading: 2, bottom: 2, trailing: 4
+            top: 3, leading: 3, bottom: 3, trailing: 3
         )
         
         // Group
@@ -307,7 +307,7 @@ extension HomeViewController {
         )
         
         item.contentInsets = NSDirectionalEdgeInsets(
-            top: 4, leading: 2, bottom: 2, trailing: 4
+            top: 3, leading: 3, bottom: 3, trailing: 3
         )
         
         // Group
@@ -363,7 +363,7 @@ extension HomeViewController {
         )
         
         item.contentInsets = NSDirectionalEdgeInsets(
-            top: 4, leading: 2, bottom: 2, trailing: 4
+            top: 3, leading: 3, bottom: 3, trailing: 3
         )
     
         // Group

@@ -11,8 +11,26 @@ class RecommendedTrackCollectionViewCell: UICollectionViewCell {
     
     static let identifier = "RecommendedTrackCollectionViewCell"
     
+    private let horizontalStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.spacing = 5
+        
+        return stackView
+    }()
+    
+    private let verticalStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .vertical
+        stackView.spacing = 5
+        
+        return stackView
+    }()
+    
     private let albumCoverImageView: UIImageView = {
         let imageView = UIImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.image = UIImage(systemName: "photo")
         imageView.contentMode = .scaleAspectFit
         imageView.layer.masksToBounds = true
@@ -21,16 +39,26 @@ class RecommendedTrackCollectionViewCell: UICollectionViewCell {
         return imageView
     }()
     
+    private let trackNameView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.clipsToBounds = true
+        
+        return view
+    }()
+    
     private let trackNameLabel: UILabel = {
         let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 18, weight: .regular)
-        label.numberOfLines = 0
+        label.numberOfLines = 2
         
         return label
     }()
     
     private let artistNameLabel: UILabel = {
         let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 15, weight: .thin)
         label.numberOfLines = 0
         
@@ -44,48 +72,41 @@ class RecommendedTrackCollectionViewCell: UICollectionViewCell {
         contentView.layer.cornerRadius = 5
         contentView.clipsToBounds = true
         
-        contentView.addSubview(albumCoverImageView)
-        contentView.addSubview(trackNameLabel)
-        contentView.addSubview(artistNameLabel)
+        configureConstraints()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func layoutSubviews() {
-        super.layoutSubviews()
+    private func configureConstraints() {
+        contentView.addSubview(horizontalStackView)
 
-        let contentSize = contentView.frame
+        horizontalStackView.addArrangedSubview(albumCoverImageView)
+        horizontalStackView.addArrangedSubview(verticalStackView)
+
+        verticalStackView.addArrangedSubview(trackNameView)
+        verticalStackView.addArrangedSubview(artistNameLabel)
         
-        albumCoverImageView.frame = CGRect(
-            x: 5,
-            y: 5,
-            width: contentSize.height - 10,
-            height: contentSize.height - 10
-        )
- 
-        trackNameLabel.frame = CGRect(
-            x: albumCoverImageView.frame.maxX + 5,
-            y: 5,
-            width: contentSize.width - albumCoverImageView.frame.maxX - 5,
-            height: contentSize.height / 2.0
-        )
-        
-        artistNameLabel.frame = CGRect(
-            x: albumCoverImageView.frame.maxX + 5,
-            y: contentSize.height - artistNameLabel.frame.height - 5,
-            width: contentSize.width - albumCoverImageView.frame.maxX - 5,
-            height: contentSize.height / 2.0
-        )
-    }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        
-        albumCoverImageView.image = nil
-        trackNameLabel.text = nil
-        artistNameLabel.text = nil
+        trackNameView.addSubview(trackNameLabel)
+
+        // Setup constaints for all components
+        let padding: CGFloat = 5.0
+        NSLayoutConstraint.activate([
+            horizontalStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: padding),
+            horizontalStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -padding),
+            horizontalStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -padding),
+            horizontalStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: padding),
+
+            // Because horizontalStackView's distribution is fill proportionally,
+            // so the height of albumCoverImageView is equal to the height of horizontalStackView
+            albumCoverImageView.widthAnchor.constraint(equalTo: albumCoverImageView.heightAnchor),
+
+            trackNameLabel.topAnchor.constraint(equalTo: trackNameView.topAnchor),
+            trackNameLabel.trailingAnchor.constraint(equalTo: trackNameView.trailingAnchor),
+            trackNameLabel.leadingAnchor.constraint(equalTo: trackNameView.leadingAnchor),
+            trackNameLabel.heightAnchor.constraint(lessThanOrEqualTo: trackNameView.heightAnchor),
+        ])
     }
     
     public func configure(with viewModel: RecommendedTrackCellViewModel) {
