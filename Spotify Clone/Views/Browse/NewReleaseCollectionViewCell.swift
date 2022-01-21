@@ -12,8 +12,26 @@ class NewReleaseCollectionViewCell: UICollectionViewCell {
     
     static let identifier = "NewReleaseCollectionViewCell"
     
+    private let horizontalStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.spacing = 5
+        
+        return stackView
+    }()
+    
+    private let verticalStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .vertical
+        stackView.spacing = 5
+        
+        return stackView
+    }()
+    
     private let albumCoverImageView: UIImageView = {
         let imageView = UIImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.image = UIImage(systemName: "photo")
         imageView.contentMode = .scaleAspectFit
         imageView.layer.masksToBounds = true
@@ -22,27 +40,38 @@ class NewReleaseCollectionViewCell: UICollectionViewCell {
         return imageView
     }()
     
+    private let nameView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.clipsToBounds = true
+        
+        return view
+    }()
+    
     private let albumNameLabel: UILabel = {
         let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 20, weight: .semibold)
         label.numberOfLines = 0
-        
+    
         return label
     }()
     
     private let artistNameLabel: UILabel = {
         let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 18, weight: .thin)
         label.numberOfLines = 0
-        
+    
         return label
     }()
     
     private let numberOfTracksLabel: UILabel = {
         let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 18, weight: .light)
         label.numberOfLines = 0
-        
+    
         return label
     }()
     
@@ -53,66 +82,48 @@ class NewReleaseCollectionViewCell: UICollectionViewCell {
         contentView.clipsToBounds = true
         contentView.backgroundColor = .secondarySystemBackground
         
-        contentView.addSubview(albumCoverImageView)
-        contentView.addSubview(albumNameLabel)
-        contentView.addSubview(artistNameLabel)
-        contentView.addSubview(numberOfTracksLabel)
+        configureConstraints()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        
-        let width = contentView.frame.width
-        let height = contentView.frame.height
-        let imageSize = contentView.frame.height - 10
-        let albumLabelSize = albumNameLabel.sizeThatFits(
-            CGSize(
-                width: width - imageSize - 10,
-                height: height - 10
-            )
-        )
-        let albumLabelHeight = min(60, albumLabelSize.height)
-        
-        artistNameLabel.sizeToFit()
-        numberOfTracksLabel.sizeToFit()
-        
-        
-        // Configure frames
-        albumCoverImageView.frame = CGRect(x: 5, y: 5, width: imageSize, height: imageSize)
-        
-        albumNameLabel.frame = CGRect(
-            x: imageSize + 15,
-            y: 5,
-            width: width - imageSize - 20,
-            height: albumLabelHeight
-        )
-        
-        artistNameLabel.frame = CGRect(
-            x: imageSize + 15,
-            y: albumNameLabel.frame.height + 5,
-            width: width - imageSize - 20,
-            height: 30
-        )
-        
-        numberOfTracksLabel.frame = CGRect(
-            x: imageSize + 15,
-            y: height - 44,
-            width: width - imageSize - 20,
-            height: 44
-        )
-    }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        
-        albumCoverImageView.image = nil
-        albumNameLabel.text = nil
-        artistNameLabel.text = nil
-        numberOfTracksLabel.text = nil
+    private func configureConstraints() {
+        contentView.addSubview(horizontalStackView)
+
+        horizontalStackView.addArrangedSubview(albumCoverImageView)
+        horizontalStackView.addArrangedSubview(verticalStackView)
+
+        verticalStackView.addArrangedSubview(nameView)
+        verticalStackView.addArrangedSubview(numberOfTracksLabel)
+
+        nameView.addSubview(albumNameLabel)
+        nameView.addSubview(artistNameLabel)
+
+
+        // Setup constaints for all components
+        let padding: CGFloat = 5.0
+        NSLayoutConstraint.activate([
+            horizontalStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: padding),
+            horizontalStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -padding),
+            horizontalStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -padding),
+            horizontalStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: padding),
+
+            // Because horizontalStackView's distribution is fill proportionally,
+            // so the height of albumCoverImageView is equal to the height of horizontalStackView
+            albumCoverImageView.widthAnchor.constraint(equalTo: albumCoverImageView.heightAnchor),
+
+            albumNameLabel.topAnchor.constraint(equalTo: nameView.topAnchor),
+            albumNameLabel.trailingAnchor.constraint(equalTo: nameView.trailingAnchor),
+            albumNameLabel.leadingAnchor.constraint(equalTo: nameView.leadingAnchor),
+            albumNameLabel.heightAnchor.constraint(lessThanOrEqualTo: nameView.heightAnchor, multiplier: 2.0 / 3.0),
+
+            artistNameLabel.topAnchor.constraint(equalTo: albumNameLabel.bottomAnchor),
+            artistNameLabel.trailingAnchor.constraint(equalTo: nameView.trailingAnchor),
+            artistNameLabel.leadingAnchor.constraint(equalTo: nameView.leadingAnchor),
+            artistNameLabel.heightAnchor.constraint(lessThanOrEqualTo: nameView.heightAnchor, multiplier: 1.0 / 3.0),
+        ])
     }
     
     public func configure(with viewModel: NewReleaseCellViewModel) {

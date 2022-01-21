@@ -1,18 +1,18 @@
 //
-//  PlaylistViewController.swift
-//  Spotify
+//  AlbumViewController.swift
+//  Spotify Clone
 //
-//  Created by Le Hoang Anh on 17/01/2022.
+//  Created by Le Hoang Anh on 21/01/2022.
 //
 
 import UIKit
 
-class PlaylistViewController: UIViewController {
+class AlbumViewController: UIViewController {
 
-    private let playlist: Playlist
+    private let album: Album
     
-    init(playlist: Playlist) {
-        self.playlist = playlist
+    init(album: Album) {
+        self.album = album
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -24,19 +24,19 @@ class PlaylistViewController: UIViewController {
         super.viewDidLoad()
         
         view.backgroundColor = .systemBackground
-        title = playlist.name
+        title = album.name
         navigationItem.largeTitleDisplayMode = .never
         
         fetchData()
     }
-
+    
     private func fetchData() {
-        APICaller.shared.getPlaylistDetails(for: playlist) { result in
+        APICaller.shared.getAlbumDetails(for: album) { result in
             switch result {
             case .success(let model):
                 print(model)
             case .failure(let error):
-                print("ERROR - getPlaylistDetails: \(error.localizedDescription)")
+                print("ERROR - getAlbumDetails: \(error.localizedDescription)")
             }
         }
     }

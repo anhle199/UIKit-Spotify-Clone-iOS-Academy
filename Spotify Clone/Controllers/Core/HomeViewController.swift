@@ -37,6 +37,9 @@ class HomeViewController: UIViewController {
     }()
     
     private var sections = [BrowseSectionType]()
+    private var newAlbums = [Album]()
+    private var playlists = [Playlist]()
+    private var tracks = [AudioTrack]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -176,6 +179,10 @@ class HomeViewController: UIViewController {
         tracks: [AudioTrack]
     ) {
         
+        self.newAlbums = newAlbums
+        self.playlists = playlists
+        self.tracks = tracks
+        
         // NewReleaseCellViewModel
         sections.append(.newReleases(
             viewModels: newAlbums.compactMap { album in
@@ -204,7 +211,7 @@ class HomeViewController: UIViewController {
             viewModels: tracks.compactMap { track in
                 return RecommendedTrackCellViewModel(
                     name: track.name,
-                    artworkURL: URL(string: track.album.images.first?.url ?? ""),
+                    artworkURL: URL(string: track.album?.images.first?.url ?? ""),
                     artistName: track.artists.first?.name ?? "-"
                 )
             }
@@ -386,12 +393,38 @@ extension HomeViewController {
 }
 
 
-// MARK: - Conform UICollectionViewDelegate and UICollectionViewDataSource
-extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSource {
+// MARK: - Conforms UICollectionViewDelegate
+extension HomeViewController: UICollectionViewDelegate {
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        
+        let section = sections[indexPath.section]
+        switch section {
+        case .newReleases:
+            let album = newAlbums[indexPath.row]
+            let albumVC = AlbumViewController(album: album)
+            navigationController?.pushViewController(albumVC, animated: true)
+            
+        case .featuredPlaylists:
+            let playlist = playlists[indexPath.row]
+            let playlistVC = PlaylistViewController(playlist: playlist)
+            navigationController?.pushViewController(playlistVC, animated: true)
+            
+        case .recommendedTracks:
+            break
+        }
+    }
+    
+}
+
+
+// MARK: - Conforms UICollectionViewDataSource
+extension HomeViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         let type = sections[section]
-        
+
         switch type {
         case .newReleases(let viewModels):
             return viewModels.count
@@ -401,14 +434,14 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
             return viewModels.count
         }
     }
-    
+
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         return sections.count
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let type = sections[indexPath.section]
-        
+
         switch type {
         case .newReleases(let viewModels):
             guard let cell = collectionView.dequeueReusableCell(
@@ -417,10 +450,10 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
             ) as? NewReleaseCollectionViewCell else {
                 return UICollectionViewCell()
             }
-            
+
             cell.configure(with: viewModels[indexPath.row])
             return cell
-            
+
         case .featuredPlaylists(let viewModels):
             guard let cell = collectionView.dequeueReusableCell(
                 withReuseIdentifier: FeaturedPlaylistCollectionViewCell.identifier,
@@ -428,10 +461,10 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
             )  as? FeaturedPlaylistCollectionViewCell else {
                 return UICollectionViewCell()
             }
-            
+
             cell.configure(with: viewModels[indexPath.row])
             return cell
-            
+
         case .recommendedTracks(let viewModels):
             guard let cell = collectionView.dequeueReusableCell(
                 withReuseIdentifier: RecommendedTrackCollectionViewCell.identifier,
@@ -439,7 +472,7 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
             )  as? RecommendedTrackCollectionViewCell else {
                 return UICollectionViewCell()
             }
-            
+
             cell.configure(with: viewModels[indexPath.row])
             return cell
         }
