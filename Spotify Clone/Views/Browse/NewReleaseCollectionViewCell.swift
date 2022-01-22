@@ -53,7 +53,7 @@ class NewReleaseCollectionViewCell: UICollectionViewCell {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 20, weight: .semibold)
         label.numberOfLines = 0
-    
+
         return label
     }()
     

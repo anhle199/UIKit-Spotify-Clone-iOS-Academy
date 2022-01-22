@@ -18,6 +18,7 @@ class AuthViewController: UIViewController, WKNavigationDelegate {
         config.defaultWebpagePreferences = preferences
         
         let webView = WKWebView(frame: .zero, configuration: config)
+        webView.translatesAutoresizingMaskIntoConstraints = false
         
         return webView
     }()
@@ -36,11 +37,13 @@ class AuthViewController: UIViewController, WKNavigationDelegate {
         if let url = AuthManager.shared.signInURL {
             webView.load(URLRequest(url: url))
         }
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        webView.frame = view.bounds 
+        
+        NSLayoutConstraint.activate([
+            webView.topAnchor.constraint(equalTo: view.topAnchor),
+            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+        ])
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {

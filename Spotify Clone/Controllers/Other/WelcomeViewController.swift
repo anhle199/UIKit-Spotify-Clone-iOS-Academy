@@ -26,7 +26,6 @@ class WelcomeViewController: UIViewController {
         title = "Spotify"
         view.backgroundColor = .systemGreen
         view.addSubview(signInButton)
-        signInButton.addTarget(self, action: #selector(didTapSignIn), for: .touchUpInside)
         
         // Setup constraint for the Sign In button
         NSLayoutConstraint.activate([
@@ -35,6 +34,8 @@ class WelcomeViewController: UIViewController {
             signInButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             signInButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
         ])
+        
+        signInButton.addTarget(self, action: #selector(didTapSignIn), for: .touchUpInside)
     }
     
     @objc func didTapSignIn(_ sender: UIButton) {

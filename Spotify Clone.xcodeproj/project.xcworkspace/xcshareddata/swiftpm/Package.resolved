@@ -5,9 +5,9 @@
         "package": "SDWebImage",
         "repositoryURL": "https://github.com/SDWebImage/SDWebImage",
         "state": {
-          "branch": null,
-          "revision": "0fff0d7505b5306348263ea64fcc561253bbeb21",
-          "version": "5.12.2"
+          "branch": "master",
+          "revision": "0cd9a6485acb6964330cce773fc93be7452ac2c8",
+          "version": null
         }
       }
     ]
