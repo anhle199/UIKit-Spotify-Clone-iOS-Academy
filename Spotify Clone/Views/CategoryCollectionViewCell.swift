@@ -1,5 +1,5 @@
 //
-//  GenreCollectionViewCell.swift
+//  CategoryCollectionViewCell.swift
 //  Spotify Clone
 //
 //  Created by Le Hoang Anh on 22/01/2022.
@@ -7,26 +7,28 @@
 
 import UIKit
 
-class GenreCollectionViewCell: UICollectionViewCell {
+class CategoryCollectionViewCell: UICollectionViewCell {
 
     // MARK: - Properties
     
     static let identifier = "GenreCollectionViewCell"
     
-    private let imageView: UIImageView = {
-        let image = UIImage(
-            systemName: "music.quarternote.3",
-            withConfiguration: UIImage.SymbolConfiguration(
-                pointSize: 50,
-                weight: .regular
-            )
+    private static let musicPlaceholderImage = UIImage(
+        systemName: "music.quarternote.3",
+        withConfiguration: UIImage.SymbolConfiguration(
+            pointSize: 50,
+            weight: .regular
         )
-        
+    )
+    
+    private let imageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.image = image
+        imageView.image = CategoryCollectionViewCell.musicPlaceholderImage
         imageView.contentMode = .scaleAspectFit
         imageView.tintColor = .white
+        imageView.layer.masksToBounds = true
+        imageView.layer.cornerRadius = 5
         
         return imageView
     }()
@@ -36,6 +38,7 @@ class GenreCollectionViewCell: UICollectionViewCell {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .white
         label.font = .systemFont(ofSize: 22, weight: .semibold)
+        label.numberOfLines = 0
         
         return label
     }()
@@ -78,29 +81,38 @@ class GenreCollectionViewCell: UICollectionViewCell {
     // MARK: - Methods
     
     private func configureConstraints() {
-        let horizontalLabelPadding: CGFloat = 10.0
+        let horizontalPadding: CGFloat = 10.0
         
         NSLayoutConstraint.activate([
             // position: top-left
-            // width: a quarter of contentView's width
-            // height: a quarter of contentView's height
-            imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            imageView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.5),
-            imageView.heightAnchor.constraint(equalTo: contentView.heightAnchor, multiplier: 0.5),
+            // width: equal to its height
+            // height: a quarter of contentView's height minus by 5
+            imageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: horizontalPadding),
+            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontalPadding),
+            imageView.heightAnchor.constraint(
+                equalTo: contentView.heightAnchor,
+                multiplier: 0.5,
+                constant: -horizontalPadding / 2.0
+            ),
+            imageView.widthAnchor.constraint(equalTo: imageView.heightAnchor),
             
             // position: bottom
             // width: equal to contentView's width
             // height: a half of contentView's height
-            label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontalLabelPadding),
+            label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontalPadding),
             label.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontalLabelPadding),
+            label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontalPadding),
             label.heightAnchor.constraint(equalTo: contentView.heightAnchor, multiplier: 0.5),
         ])
     }
     
-    public func configure(with title: String) {
-        label.text = title
+    public func configure(with viewModel: CategoryCollectionViewCellViewModel) {
+        label.text = viewModel.name
+        imageView.sd_setImage(
+            with: viewModel.artworkURL,
+            placeholderImage: CategoryCollectionViewCell.musicPlaceholderImage,
+            completed: nil
+        )
         contentView.backgroundColor = colors.randomElement()
     }
     

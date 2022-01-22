@@ -26,6 +26,8 @@ enum BrowseSectionType {
 
 class HomeViewController: UIViewController {
 
+    // MARK: - Properties
+    
     private let collectionView: UICollectionView = {
         let collectionView = UICollectionView(
             frame: .zero,
@@ -35,15 +37,23 @@ class HomeViewController: UIViewController {
                 return HomeViewController.makeSectionLayout(section: sectionIndex)
             }
         )
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.isHidden = true
         
         return collectionView
     }()
     
+    private let alertController: UIAlertController = {
+        let alertController = UIAlertController(title: "Loading", message: nil, preferredStyle: .alert)
+        
+        return alertController
+    }()
+    
     private let spinner: UIActivityIndicatorView = {
         let spinner = UIActivityIndicatorView()
-        spinner.tintColor = .label
-        spinner.hidesWhenStopped = true
-        
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        spinner.isUserInteractionEnabled = false
+
         return spinner
     }()
     
@@ -51,6 +61,9 @@ class HomeViewController: UIViewController {
     private var newAlbums = [Album]()
     private var playlists = [Playlist]()
     private var tracks = [AudioTrack]()
+    
+    
+    // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -63,15 +76,41 @@ class HomeViewController: UIViewController {
             action: #selector(didTapSettings)
         )
         
-        configureCollectionView()
-        view.addSubview(spinner)
         
+        // Configures loading view
+        configureLoadingView()
+        
+        // Configures collection view
+        configureCollectionView()
+        
+        // Starts loading view
+        startLoadingView()
+        
+        // Fetches data
         fetchData()
     }
     
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        collectionView.frame = view.bounds
+    // MARK: - Methods
+    
+    private func configureLoadingView() {
+        alertController.view.addSubview(spinner)
+        
+        NSLayoutConstraint.activate([
+            alertController.view.heightAnchor.constraint(equalToConstant: 80),
+    
+            spinner.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor),
+            spinner.centerYAnchor.constraint(equalTo: alertController.view.centerYAnchor, constant: 15),
+        ])
+    }
+    
+    private func startLoadingView() {
+        spinner.startAnimating()
+        present(alertController, animated: true, completion: nil)
+    }
+    
+    private func stopLoadingView() {
+        alertController.dismiss(animated: true, completion: nil)
+        spinner.stopAnimating()
     }
     
     private func configureCollectionView() {
@@ -103,6 +142,14 @@ class HomeViewController: UIViewController {
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.backgroundColor = .systemBackground
+        
+        // Configure contraints for collection view
+        NSLayoutConstraint.activate([
+            collectionView.topAnchor.constraint(equalTo: view.topAnchor),
+            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+        ])
     }
     
     private func fetchData() {
@@ -236,6 +283,8 @@ class HomeViewController: UIViewController {
         
         // Trigger colectionView to reload data
         collectionView.reloadData()
+        stopLoadingView()
+        collectionView.isHidden = false
     }
 
     @objc func didTapSettings(_ sender: UIBarButtonItem) {
@@ -454,18 +503,16 @@ extension HomeViewController: UICollectionViewDelegate {
         
         let section = sections[indexPath.section]
         switch section {
-        case .newReleases:
-            let album = newAlbums[indexPath.row]
-            let albumVC = AlbumViewController(album: album)
-            navigationController?.pushViewController(albumVC, animated: true)
-            
-        case .featuredPlaylists:
-            let playlist = playlists[indexPath.row]
-            let playlistVC = PlaylistViewController(playlist: playlist)
-            navigationController?.pushViewController(playlistVC, animated: true)
-            
-        case .recommendedTracks:
-            break
+            case .newReleases:
+                let albumVC = AlbumViewController(album: newAlbums[indexPath.row])
+                navigationController?.pushViewController(albumVC, animated: true)
+                
+            case .featuredPlaylists:
+                let playlistVC = PlaylistViewController(playlist: playlists[indexPath.row])
+                navigationController?.pushViewController(playlistVC, animated: true)
+                
+            case .recommendedTracks:
+                break
         }
     }
     

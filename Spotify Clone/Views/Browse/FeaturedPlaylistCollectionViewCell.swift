@@ -24,7 +24,7 @@ class FeaturedPlaylistCollectionViewCell: UICollectionViewCell {
     private let playlistNameLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 18, weight: .regular)
-        label.numberOfLines = 0
+        label.numberOfLines = 2
         label.textAlignment = .center
         
         return label
@@ -33,7 +33,7 @@ class FeaturedPlaylistCollectionViewCell: UICollectionViewCell {
     private let creatorNameLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 15, weight: .thin)
-        label.numberOfLines = 0
+        label.numberOfLines = 1
         label.textAlignment = .center
         
         return label
@@ -42,7 +42,6 @@ class FeaturedPlaylistCollectionViewCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        contentView.backgroundColor = UIColor.secondarySystemBackground
         contentView.layer.cornerRadius = 8
         contentView.clipsToBounds = true
         

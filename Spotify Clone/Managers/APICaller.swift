@@ -22,6 +22,7 @@ final class APICaller {
     
     
     // MARK: - Albums
+    
     public func getAlbumDetails(
         for album: Album,
         completion: @escaping (Result<AlbumDetailsResponse, Error>) -> Void
@@ -52,6 +53,7 @@ final class APICaller {
     
     
     // MARK: - Playlists
+    
     public func getPlaylistDetails(
         for playlist: Playlist,
         completion: @escaping (Result<PlaylistDetailsResponse, Error>) -> Void
@@ -82,6 +84,7 @@ final class APICaller {
     
     
     // MARK: - Profile
+    
     public func getCurrentUserProfile(
         completion: @escaping (Result<UserProfile, Error>) -> Void
     ) {
@@ -111,6 +114,7 @@ final class APICaller {
     
     
     // MARK: - Browse
+    
     public func getNewReleases(
         completion: @escaping (Result<NewReleasesResponse, Error>) -> Void
     ) {
@@ -230,7 +234,63 @@ final class APICaller {
         }
     }
     
-    enum HTTPMethod: String {
+    
+    // MARK: - Categories
+    
+    public func getAllCategories(completion: @escaping (Result<[Category], Error>) -> Void) {
+        let url = URL(string: "\(Constants.baseAPIURL)/browse/categories?limit=50")
+        
+        makeRequest(with: url, type: .GET) { request in
+            let task = URLSession.shared.dataTask(with: request) { data, _, error in
+                guard let data = data, error == nil else {
+                    completion(.failure(APIError.failedToGetData))
+                    return
+                }
+
+                do {
+                    let result = try JSONDecoder().decode(AllCategoriesResponse.self, from: data)
+                    completion(.success(result.categories.items))
+                } catch {
+                    completion(.failure(error))
+                }
+            }
+            
+            task.resume()
+        }
+    }
+    
+    public func getCategoryPlaylists(
+        category: Category,
+        completion: @escaping (Result<[Playlist], Error>) -> Void
+    ) {
+        
+        let url = URL(
+            string: "\(Constants.baseAPIURL)/browse/categories/\(category.id)/playlists?limit=50"
+        )
+        
+        makeRequest(with: url, type: .GET) { request in
+            let task = URLSession.shared.dataTask(with: request) { data, _, error in
+                guard let data = data, error == nil else {
+                    completion(.failure(APIError.failedToGetData))
+                    return
+                }
+                
+                do {
+                    let result = try JSONDecoder().decode(CategoryPlaylistsResponse.self, from: data)
+                    completion(.success(result.playlists.items))
+                } catch {
+                    completion(.failure(error))
+                }
+            }
+            
+            task.resume()
+        }
+    }
+    
+    
+    // MARK: - Private
+    
+    private enum HTTPMethod: String {
         case GET
         case POST
     }
