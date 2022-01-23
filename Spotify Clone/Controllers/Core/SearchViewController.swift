@@ -7,6 +7,31 @@
 
 import UIKit
 
+enum SearchScope: String, CaseIterable {
+    case all = "All"
+    case albums = "Albums"
+    case artists = "Artists"
+    case playlists = "Playlists"
+    case songs = "Songs"
+    
+    init?(rawValue: String) {
+        switch rawValue {
+            case "All":
+                self = .all
+            case "Albums":
+                self = .albums
+            case "Artists":
+                self = .artists
+            case "Playlists":
+                self = .playlists
+            case "Songs":
+                self = .songs
+            default:
+                return nil
+        }
+    }
+}
+
 class SearchViewController: UIViewController, UISearchResultsUpdating {
     
     // MARK: - Properties
@@ -18,6 +43,8 @@ class SearchViewController: UIViewController, UISearchResultsUpdating {
         searchVC.searchBar.placeholder = "Songs, Artists, Albums"
         searchVC.searchBar.searchBarStyle = .minimal
         searchVC.definesPresentationContext = true
+        searchVC.searchBar.autocapitalizationType = .none
+        searchVC.searchBar.scopeButtonTitles = SearchScope.allCases.map({ $0.rawValue })
         
         return searchVC
     }()
@@ -46,13 +73,22 @@ class SearchViewController: UIViewController, UISearchResultsUpdating {
         
         view.backgroundColor = .systemBackground
         
-        // configures SearchController
+        configureSearchController()
+        configureCollectionView()
+        configureConstraints()
+        
+        fetchAllCategories()
+    }
+    
+    private func configureSearchController() {
         navigationItem.searchController = searchController
         searchController.searchResultsUpdater = self
         searchController.searchBar.delegate = self
-        
-        // configures CollectionView
+    }
+    
+    private func configureCollectionView() {
         view.addSubview(collectionView)
+        
         collectionView.backgroundColor = .systemBackground
         collectionView.register(
             CategoryCollectionViewCell.self,
@@ -60,12 +96,6 @@ class SearchViewController: UIViewController, UISearchResultsUpdating {
         )
         collectionView.delegate = self
         collectionView.dataSource = self
-    
-        // configure contraints for all subviews
-        configureConstraints()
-        
-        // fetches a list of categories
-        fetchAllCategories()
     }
     
     private func configureConstraints() {
@@ -207,10 +237,21 @@ extension SearchViewController: UISearchBarDelegate {
                     case.success(let results):
                         resultsController.update(with: results)
                     case .failure(let error):
-                        print("ERROR: \(error.localizedDescription)")
+                        print("ERROR - search: \(error.localizedDescription)")
                 }
             }
         }
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, selectedScopeButtonIndexDidChange selectedScope: Int) {
+        guard let resultsController = searchController.searchResultsController as? SearchResultsViewController,
+              let allScopes = searchBar.scopeButtonTitles,
+              let selectedSearchScope = SearchScope(rawValue: allScopes[selectedScope])
+        else {
+            return
+        }
+        
+        resultsController.filtering(by: selectedSearchScope)
     }
     
 }

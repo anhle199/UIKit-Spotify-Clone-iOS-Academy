@@ -17,7 +17,7 @@ class RecommendedTrackCollectionViewCell: UICollectionViewCell {
         imageView.image = UIImage(systemName: "photo")
         imageView.contentMode = .scaleAspectFit
         imageView.layer.masksToBounds = true
-        imageView.layer.cornerRadius = 2
+        imageView.layer.cornerRadius = 5
         
         return imageView
     }()

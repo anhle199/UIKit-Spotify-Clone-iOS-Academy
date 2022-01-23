@@ -291,6 +291,7 @@ final class APICaller {
     // MARK: - Search
     
     public func search(with query: String, completion: @escaping (Result<[SearchResult], Error>) -> Void) {
+        
         let queryEncoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let type = "album,artist,playlist,track"
         let url = URL(string: "\(Constants.baseAPIURL)/search?q=\(queryEncoded)&type=\(type)&limit=10")
