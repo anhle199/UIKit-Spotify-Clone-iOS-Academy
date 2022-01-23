@@ -49,6 +49,7 @@ class SearchViewController: UIViewController, UISearchResultsUpdating {
         // configures SearchController
         navigationItem.searchController = searchController
         searchController.searchResultsUpdater = self
+        searchController.searchBar.delegate = self
         
         // configures CollectionView
         view.addSubview(collectionView)
@@ -91,15 +92,7 @@ class SearchViewController: UIViewController, UISearchResultsUpdating {
     }
     
     func updateSearchResults(for searchController: UISearchController) {
-        guard let resultsController = searchController.searchResultsController as? SearchResultsViewController,
-              let query = searchController.searchBar.text,
-              !query.trimmingCharacters(in: .whitespaces).isEmpty
-        else {
-            return
-        }
         
-        print(query)
-        // Calls search api
     }
     
 }
@@ -190,6 +183,57 @@ extension SearchViewController: UICollectionViewDataSource {
         cell.configure(with: viewModel)
         
         return cell
+    }
+    
+}
+
+
+// MARK: - Conforms the UISearchBarDelegate protocol
+extension SearchViewController: UISearchBarDelegate {
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        guard let resultsController = searchController.searchResultsController as? SearchResultsViewController,
+              let query = searchBar.text,
+              !query.trimmingCharacters(in: .whitespaces).isEmpty
+        else {
+            return
+        }
+        
+        resultsController.delegate = self
+        
+        APICaller.shared.search(with: query) { result in
+            DispatchQueue.main.async {
+                switch result {
+                    case.success(let results):
+                        resultsController.update(with: results)
+                    case .failure(let error):
+                        print("ERROR: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+}
+
+
+// MARK: - Conforms the SearchResultsViewControllerDelegate protocol
+extension SearchViewController: SearchResultsViewControllerDelegate {
+    
+    func didTapResult(_ result: SearchResult) {
+        switch result {
+            case .album(let model):
+                let albumVC = AlbumViewController(album: model)
+                navigationController?.pushViewController(albumVC, animated: true)
+                
+            case .artist(_/*let model*/):
+                break
+            case .playlist(let model):
+                let playlistVC = PlaylistViewController(playlist: model)
+                navigationController?.pushViewController(playlistVC, animated: true)
+                
+            case .track(_/*let model*/):
+                break
+        }
     }
     
 }

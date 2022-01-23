@@ -288,6 +288,40 @@ final class APICaller {
     }
     
     
+    // MARK: - Search
+    
+    public func search(with query: String, completion: @escaping (Result<[SearchResult], Error>) -> Void) {
+        let queryEncoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let type = "album,artist,playlist,track"
+        let url = URL(string: "\(Constants.baseAPIURL)/search?q=\(queryEncoded)&type=\(type)&limit=10")
+        
+        makeRequest(with: url, type: .GET) { request in
+            let task = URLSession.shared.dataTask(with: request) { data, _, error in
+                guard let data = data, error == nil else {
+                    completion(.failure(APIError.failedToGetData))
+                    return
+                }
+                
+                do {
+                    let result = try JSONDecoder().decode(SearchResultsResponse.self, from: data)
+                    
+                    var searchResults = [SearchResult]()
+                    searchResults.append(contentsOf: result.albums.items.compactMap({ .album(model: $0) }))
+                    searchResults.append(contentsOf: result.artists.items.compactMap({ .artist(model: $0) }))
+                    searchResults.append(contentsOf: result.playlists.items.compactMap({ .playlist(model: $0) }))
+                    searchResults.append(contentsOf: result.tracks.items.compactMap({ .track(model: $0) }))
+                    
+                    completion(.success(searchResults))
+                } catch {
+                    completion(.failure(error))
+                }
+            }
+            
+            task.resume()
+        }
+    }
+    
+    
     // MARK: - Private
     
     private enum HTTPMethod: String {
