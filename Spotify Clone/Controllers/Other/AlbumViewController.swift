@@ -9,6 +9,8 @@ import UIKit
 
 class AlbumViewController: UIViewController {
 
+    // MARK: - Properties
+    
     private let album: Album
     
     private let collectionView: UICollectionView = {
@@ -23,6 +25,12 @@ class AlbumViewController: UIViewController {
         
         return collectionView
     }()
+
+    private var viewModels = [AlbumCollectionViewCellViewModel]()
+    private var tracks = [AudioTrack]()
+    
+    
+    // MARK: - Initializers
     
     init(album: Album) {
         self.album = album
@@ -32,9 +40,9 @@ class AlbumViewController: UIViewController {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
     
-    // MARK: - ViewModels
-    private var viewModels = [AlbumCollectionViewCellViewModel]()
+    // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -63,11 +71,20 @@ class AlbumViewController: UIViewController {
         fetchData()
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        collectionView.frame = view.bounds
+    }
+    
+    
+    // MARK: - Methods
+    
     private func fetchData() {
         APICaller.shared.getAlbumDetails(for: album) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let model):
+                    self?.tracks = model.tracks.items
                     self?.viewModels = model.tracks.items.compactMap { item in
                         return AlbumCollectionViewCellViewModel(
                             name: item.name,
@@ -82,11 +99,6 @@ class AlbumViewController: UIViewController {
                 }
             }
         }
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        collectionView.frame = view.bounds
     }
     
 }
@@ -144,7 +156,7 @@ extension AlbumViewController: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
-        print("Playing song")
+        PlaybackPresenter.startPlayback(from: self, track: tracks[indexPath.row])
     }
     
 }
@@ -208,7 +220,7 @@ extension AlbumViewController: UICollectionViewDataSource {
 extension AlbumViewController: PlaylistHeaderCollectionReusableViewDelegate {
     
     func playlistHeaderCollectionReusableViewDidTapPlayAll(_ header: PlaylistHeaderCollectionReusableView) {
-        print("Playing all")
+        PlaybackPresenter.startPlayback(from: self, tracks: tracks)
     }
     
 }

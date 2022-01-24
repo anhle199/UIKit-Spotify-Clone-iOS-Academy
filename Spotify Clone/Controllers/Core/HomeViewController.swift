@@ -19,7 +19,7 @@ enum BrowseSectionType {
         case .featuredPlaylists:
             return "Featured Playlists"
         case .recommendedTracks:
-            return "Recommended"
+            return "Recommended Songs"
         }
     }
 }
@@ -500,19 +500,20 @@ extension HomeViewController: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
-        
+         
         let section = sections[indexPath.section]
+        
         switch section {
-            case .newReleases:
-                let albumVC = AlbumViewController(album: newAlbums[indexPath.row])
-                navigationController?.pushViewController(albumVC, animated: true)
-                
-            case .featuredPlaylists:
-                let playlistVC = PlaylistViewController(playlist: playlists[indexPath.row])
-                navigationController?.pushViewController(playlistVC, animated: true)
-                
-            case .recommendedTracks:
-                break
+        case .newReleases:
+            let albumVC = AlbumViewController(album: newAlbums[indexPath.row])
+            navigationController?.pushViewController(albumVC, animated: true)
+            
+        case .featuredPlaylists:
+            let playlistVC = PlaylistViewController(playlist: playlists[indexPath.row])
+            navigationController?.pushViewController(playlistVC, animated: true)
+            
+        case .recommendedTracks:
+            PlaybackPresenter.startPlayback(from: self, track: tracks[indexPath.row])
         }
     }
     

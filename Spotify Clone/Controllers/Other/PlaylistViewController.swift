@@ -9,6 +9,8 @@ import UIKit
 
 class PlaylistViewController: UIViewController {
 
+    // MARK: - Properties
+    
     private let playlist: Playlist
     
     private let collectionView: UICollectionView = {
@@ -24,6 +26,11 @@ class PlaylistViewController: UIViewController {
         return collectionView
     }()
     
+    private var viewModels = [RecommendedTrackCellViewModel]()
+    private var tracks = [AudioTrack]()
+    
+    // MARK: - Initializers
+    
     init(playlist: Playlist) {
         self.playlist = playlist
         super.init(nibName: nil, bundle: nil)
@@ -33,8 +40,8 @@ class PlaylistViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // MARK: - ViewModels
-    private var viewModels = [RecommendedTrackCellViewModel]()
+    
+    // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -68,6 +75,14 @@ class PlaylistViewController: UIViewController {
             action: #selector(didTapShare)
         )
     }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        collectionView.frame = view.bounds
+    }
+    
+    
+    // MARK: - Methods
 
     @objc private func didTapShare() {
         guard let url = URL(string: playlist.external_urls["spotify"] ?? "") else {
@@ -88,6 +103,7 @@ class PlaylistViewController: UIViewController {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let model):
+                    self?.tracks = model.tracks.items.compactMap({ $0.track })
                     self?.viewModels = model.tracks.items.compactMap { playlistItem in
                         return RecommendedTrackCellViewModel(
                             name: playlistItem.track.name,
@@ -103,11 +119,6 @@ class PlaylistViewController: UIViewController {
                 }
             }
         }
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        collectionView.frame = view.bounds
     }
     
 }
@@ -165,7 +176,7 @@ extension PlaylistViewController: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
-        print("Playing song")
+        PlaybackPresenter.startPlayback(from: self, track: tracks[indexPath.row])
     }
     
 }
@@ -229,7 +240,7 @@ extension PlaylistViewController: UICollectionViewDataSource {
 extension PlaylistViewController: PlaylistHeaderCollectionReusableViewDelegate {
     
     func playlistHeaderCollectionReusableViewDidTapPlayAll(_ header: PlaylistHeaderCollectionReusableView) {
-        print("Playing all")
+        PlaybackPresenter.startPlayback(from: self, tracks: tracks)
     }
     
 }

@@ -262,18 +262,18 @@ extension SearchViewController: SearchResultsViewControllerDelegate {
     
     func didTapResult(_ result: SearchResult) {
         switch result {
-            case .album(let model):
-                let albumVC = AlbumViewController(album: model)
+            case .album(let album):
+                let albumVC = AlbumViewController(album: album)
                 navigationController?.pushViewController(albumVC, animated: true)
                 
-            case .artist(_/*let model*/):
+            case .artist(_/*let artist*/):
                 break
-            case .playlist(let model):
-                let playlistVC = PlaylistViewController(playlist: model)
+            case .playlist(let playlist):
+                let playlistVC = PlaylistViewController(playlist: playlist)
                 navigationController?.pushViewController(playlistVC, animated: true)
                 
-            case .track(_/*let model*/):
-                break
+            case .track(let track):
+            PlaybackPresenter.startPlayback(from: self, track: track)
         }
     }
     
