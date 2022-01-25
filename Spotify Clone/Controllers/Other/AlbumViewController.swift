@@ -84,7 +84,12 @@ class AlbumViewController: UIViewController {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let model):
-                    self?.tracks = model.tracks.items
+                    self?.tracks = model.tracks.items.compactMap { item in
+                        var track = item
+                        track.album = self?.album
+                        
+                        return track
+                    }
                     self?.viewModels = model.tracks.items.compactMap { item in
                         return AlbumCollectionViewCellViewModel(
                             name: item.name,

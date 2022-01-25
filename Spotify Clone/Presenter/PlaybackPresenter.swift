@@ -20,6 +20,11 @@ final class PlaybackPresenter {
     private var track: AudioTrack?
     private var tracks = [AudioTrack]()
     
+    private var playerVC: PlayerViewController?
+    
+    private var isTappedForwardButton = false
+    private var setFinishASongIfNeeded = false
+    
     var currentTrack: AudioTrack? {
         if let track = track {
             return track
@@ -38,6 +43,8 @@ final class PlaybackPresenter {
     }
     
     func startPlayback(from viewController: UIViewController, track: AudioTrack) {
+        removeAllObserves()
+        
         self.player = nil
         self.playerQueue = nil
         
@@ -48,6 +55,10 @@ final class PlaybackPresenter {
             self.player = AVPlayer(url: url)
             self.player?.volume = 0.5
             self.player?.actionAtItemEnd = .pause
+            self.setFinishASongIfNeeded = true
+            
+            // Observing a player item and it will be triggered play/pause button when playing to end time
+            addAllObserves()
         }
         
         let playerVC = PlayerViewController()
@@ -55,6 +66,7 @@ final class PlaybackPresenter {
         playerVC.navigationItem.largeTitleDisplayMode = .never
         playerVC.dataSource = self
         playerVC.delegate = self
+        self.playerVC = playerVC
         
         let navVC = UINavigationController(rootViewController: playerVC)
         
@@ -67,6 +79,8 @@ final class PlaybackPresenter {
     }
     
     func startPlayback(from viewController: UIViewController, tracks: [AudioTrack]) {
+        removeAllObserves()
+        
         self.player = nil
         self.playerQueue = nil
         
@@ -83,12 +97,17 @@ final class PlaybackPresenter {
             return AVPlayerItem(url: url)
         }
         self.playerQueue = AVQueuePlayer(items: playerItems)
+        self.setFinishASongIfNeeded = true
+        
+        // Observing all player items and each item will be triggered play/pause button when playing to end time
+        addAllObserves()
         
         // Create player view controller to show music playing UI
         let playerVC = PlayerViewController()
         playerVC.navigationItem.largeTitleDisplayMode = .never
         playerVC.dataSource = self
         playerVC.delegate = self
+        self.playerVC = playerVC
         
         let navVC = UINavigationController(rootViewController: playerVC)
         
@@ -97,9 +116,105 @@ final class PlaybackPresenter {
             self?.playerQueue?.play()
         }
     }
-    
+ 
 }
 
+
+// MARK: - Applying Observable Pattern to AVPlayerItem
+extension PlaybackPresenter {
+    
+    @objc private func playerDidFinishPlaying(_ sender: Notification) {
+        print("playerDidFinishPlaying - 127")
+        if isTappedForwardButton {
+            if player != nil {
+                playerVC?.updateStatusOfPlayPauseButton(withIsPlaying: false)
+                print("playerDidFinishPlaying - 131")
+            } else if let playerQueue = playerQueue, playerQueue.items().count == 1 {
+                playerVC?.updateStatusOfPlayPauseButton(withIsPlaying: false)
+                playerQueue.actionAtItemEnd = .pause
+                print("playerDidFinishPlaying - 135")
+            }
+            
+            self.isTappedForwardButton = false
+            
+        } else if setFinishASongIfNeeded {  // isTappedForwardButton is false
+            if let player = player, track != nil {
+                print("playerDidFinishPlaying - 142")
+                // only one track.
+                // ends the current player.
+                if let duration = player.currentItem?.duration {
+//                    self.setFinishASongIfNeeded = false
+                    player.seek(to: duration)
+                    playerVC?.updateStatusOfPlayPauseButton(withIsPlaying: false)
+                    print("playerDidFinishPlaying - 149")
+                }
+                
+            } else if let playerQueue = playerQueue, !tracks.isEmpty {
+                print("playerDidFinishPlaying - 153")
+                if playerQueue.items().count == 1,
+                   let duration = playerQueue.currentItem?.duration {
+                    print("playerDidFinishPlaying - 156")
+                    self.setFinishASongIfNeeded = false
+                    playerQueue.actionAtItemEnd = .pause
+                    playerQueue.seek(to: duration)
+                    playerVC?.updateStatusOfPlayPauseButton(withIsPlaying: false)
+                } else if playerQueue.items().count > 1 {
+                    print("playerDidFinishPlaying - 162")
+                    NotificationCenter.default.removeObserver(
+                        self,
+                        name: .AVPlayerItemDidPlayToEndTime,
+                        object: playerQueue.currentItem
+                    )
+                    
+                    playerVC?.refreshUI()
+                }
+            }
+        }
+    }
+    
+    private func addAllObserves() {
+        if let player = player {
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(playerDidFinishPlaying),
+                name: .AVPlayerItemDidPlayToEndTime,
+                object: player.currentItem
+            )
+        } else if let playerQueue = playerQueue {
+            playerQueue.items().forEach { [weak self] item in
+                if let safeSelf = self {
+                    NotificationCenter.default.addObserver(
+                        safeSelf,
+                        selector: #selector(playerDidFinishPlaying),
+                        name: .AVPlayerItemDidPlayToEndTime,
+                        object: item
+                    )
+                }
+            }
+        }
+    }
+    
+    private func removeAllObserves() {
+        if let player = player {
+            NotificationCenter.default.removeObserver(
+                self,
+                name: .AVPlayerItemDidPlayToEndTime,
+                object: player.currentItem
+            )
+        } else if let playerQueue = playerQueue {
+            playerQueue.items().forEach { [weak self] item in
+                if let safeSelf = self {
+                    NotificationCenter.default.removeObserver(
+                        safeSelf,
+                        name: .AVPlayerItemDidPlayToEndTime,
+                        object: item
+                    )
+                }
+            }
+        }
+    }
+    
+}
 
 // MARK: - Conforms the PlayerViewControllerDelegate
 extension PlaybackPresenter: PlayerViewControllerDelegate {
@@ -110,61 +225,86 @@ extension PlaybackPresenter: PlayerViewControllerDelegate {
     }
     
     func didTapPlayPause() {
-        var musicPlayer: AVPlayer?
-        
-        if player != nil {
-            musicPlayer = player
-        } else if playerQueue != nil {
-            musicPlayer = playerQueue
-        }
-        
-        if let musicPlayer = musicPlayer {
-            switch musicPlayer.timeControlStatus {
-            case .paused:
-                musicPlayer.play()
-            case .playing:
-                musicPlayer.pause()
-            default:  // .waitingToPlayAtSpecifiedRate and others
-                break
+        if let player = player {
+            if player.timeControlStatus == .paused {
+                if let duration = player.currentItem?.duration,
+                   duration == player.currentTime() {
+                    
+                    player.seek(to: .zero)
+                }
+                
+                player.play()
+            } else if player.timeControlStatus == .playing {
+                player.pause()
+            }
+            
+        } else if let playerQueue = playerQueue {
+           if playerQueue.timeControlStatus == .paused {
+                if let duration = playerQueue.currentItem?.duration,
+                   duration == playerQueue.currentTime(),
+                   playerQueue.items().count == 1 {
+                    
+                    playerQueue.seek(to: .zero)
+                    playerQueue.actionAtItemEnd = .advance
+                }
+                
+                playerQueue.play()
+            } else if playerQueue.timeControlStatus == .playing {
+                playerQueue.pause()
             }
         }
     }
     
     func didTapForward() {
+        self.isTappedForwardButton = true
+        
         if let player = player, track != nil {
             // only one track.
             // ends the current player.
             if let duration = player.currentItem?.duration {
                 player.seek(to: duration)
-                
-                // set "Play" icon
             }
+
         } else if let playerQueue = playerQueue, !tracks.isEmpty {
-            playerQueue.advanceToNextItem()
+            
+            if playerQueue.items().count == 1,
+               let duration = playerQueue.currentItem?.duration {
+                
+                playerQueue.actionAtItemEnd = .pause
+                playerQueue.seek(to: duration)
+            } else if playerQueue.items().count > 1 {
+                NotificationCenter.default.removeObserver(
+                    self,
+                    name: .AVPlayerItemDidPlayToEndTime,
+                    object: playerQueue.currentItem
+                )
+                
+                playerQueue.advanceToNextItem()
+                playerVC?.refreshUI()
+            }
         }
     }
     
     func didTapBackward() {
         if let player = player, track != nil {
             player.seek(to: .zero)
-            player.play()
-            
+
         } else if let playerQueue = playerQueue, !tracks.isEmpty {
             
             guard let currentItem = playerQueue.currentItem,
-               let index = playerQueue.items().firstIndex(of: currentItem)
+                  let index = playerQueue.items().firstIndex(of: currentItem)
             else {
                 return
             }
             
             let actualIndex = tracks.count - playerQueue.items().count + index
             
-            if actualIndex == 0 {  // current song is the first song
+            if actualIndex == 0 {  // the first song in the original list of tracks
                 playerQueue.seek(to: .zero)
             } else {
-                playerQueue.pause()
+                removeAllObserves()
                 playerQueue.removeAllItems()
-                
+
                 // Recreate a queue of players
                 let preparePlayingTracks = Array<AudioTrack>(tracks[actualIndex - 1 ..< tracks.count])
                 let playerItems: [AVPlayerItem] = preparePlayingTracks.compactMap { track in
@@ -175,8 +315,10 @@ extension PlaybackPresenter: PlayerViewControllerDelegate {
                     return AVPlayerItem(url: url)
                 }
                 self.playerQueue = AVQueuePlayer(items: playerItems)
+                addAllObserves()
                 
                 self.playerQueue?.play()
+                playerVC?.refreshUI()
             }
         }
     }

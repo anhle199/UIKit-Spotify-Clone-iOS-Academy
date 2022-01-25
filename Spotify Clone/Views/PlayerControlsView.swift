@@ -202,6 +202,17 @@ final class PlayerControlsView: UIView {
         subtitleLabel.text = viewModel.subtitle
     }
     
+    func updateStatusOfPlayPauseButton(withIsPlaying isPlaying: Bool) {
+        if self.isPlaying != isPlaying {
+            self.isPlaying = isPlaying
+            
+            playPauseButton.setImage(
+                PlayerControlsView.createPlayPauseIcon(isPlaying: isPlaying),
+                for: .normal
+            )
+        }
+    }
+    
 }
 
 

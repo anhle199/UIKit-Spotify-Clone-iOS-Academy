@@ -128,6 +128,14 @@ class PlayerViewController: UIViewController {
         
     }
     
+    public func refreshUI() {
+        configureData()
+    }
+    
+    public func updateStatusOfPlayPauseButton(withIsPlaying isPlaying: Bool) {
+        controlsView.updateStatusOfPlayPauseButton(withIsPlaying: isPlaying)
+    }
+    
 }
 
 
@@ -144,12 +152,10 @@ extension PlayerViewController: PlayerControlsViewDelegate {
     
     func playerControlsViewDidTapForwardButton(_ playerControlsView: PlayerControlsView) {
         delegate?.didTapForward()
-        configureData()
     }
     
     func playerControlsViewDidTapBackwardButton(_ playerControlsView: PlayerControlsView) {
-        delegate?.didTapBackward()
-        configureData()
+        delegate?.didTapBackward() 
     }
     
 }
