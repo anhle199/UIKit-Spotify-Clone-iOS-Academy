@@ -6,11 +6,18 @@
 //
 
 import UIKit
+import AVFoundation
 
 protocol PlayerControlsViewDelegate: AnyObject {
     func playerControlsViewDidTapPlayPauseButton(_ playerControlsView: PlayerControlsView)
     func playerControlsViewDidTapForwardButton(_ playerControlsView: PlayerControlsView)
     func playerControlsViewDidTapBackwardButton(_ playerControlsView: PlayerControlsView)
+    func playerControlsView(_ playerControlsView: PlayerControlsView, didSlideSlider value: Float)
+}
+
+struct PlayerControlsViewViewModel {
+    let songName: String?
+    let subtitle: String?
 }
 
 final class PlayerControlsView: UIView {
@@ -18,6 +25,8 @@ final class PlayerControlsView: UIView {
     // MARK: - Properties
     
     weak var delegate: PlayerControlsViewDelegate?
+    
+    private var isPlaying = true
     
     private let rootStackView: UIStackView = {
         let stackView = UIStackView()
@@ -29,18 +38,28 @@ final class PlayerControlsView: UIView {
         return stackView
     }()
     
+    private let labelsView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.clipsToBounds = true
+        
+        return view
+    }()
+    
     private let nameLabel: UILabel = {
         let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 20, weight: .semibold)
-        label.numberOfLines = 1
+        label.numberOfLines = 2
         
         return label
     }()
     
     private let subtitleLabel: UILabel = {
         let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 18, weight: .regular)
-        label.numberOfLines = 1
+        label.numberOfLines = 2
         label.textColor = .secondaryLabel
         
         return label
@@ -50,8 +69,8 @@ final class PlayerControlsView: UIView {
         let slider = UISlider()
         slider.translatesAutoresizingMaskIntoConstraints = false
         slider.minimumValue = 0
-        slider.maximumValue = 100
-        slider.value = 50
+        slider.maximumValue = 1
+        slider.value = 0.5
         slider.tintColor = .blue
         
         return slider
@@ -70,7 +89,7 @@ final class PlayerControlsView: UIView {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.tintColor = .label
         button.setImage(
-            createControlImage(withSystemName: "backward.fill"),
+            PlayerControlsView.createControlImage(withSystemName: "backward.fill"),
             for: .normal
         )
         
@@ -82,7 +101,7 @@ final class PlayerControlsView: UIView {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.tintColor = .label
         button.setImage(
-            createControlImage(withSystemName: "pause.fill"),
+            PlayerControlsView.createPlayPauseIcon(isPlaying: true),
             for: .normal
         )
         
@@ -94,7 +113,7 @@ final class PlayerControlsView: UIView {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.tintColor = .label
         button.setImage(
-            createControlImage(withSystemName: "forward.fill"),
+            PlayerControlsView.createControlImage(withSystemName: "forward.fill"),
             for: .normal
         )
         
@@ -110,21 +129,19 @@ final class PlayerControlsView: UIView {
         backgroundColor = .clear
         clipsToBounds = true
         
-        // testing
-        nameLabel.text = "This is my favorite song"
-        subtitleLabel.text = "Drake (feat. Some Other Artists)"
-        
         // Add subiews
         addSubview(rootStackView)
-        rootStackView.addArrangedSubview(nameLabel)
-        rootStackView.addArrangedSubview(subtitleLabel)
+        rootStackView.addArrangedSubview(labelsView)
         rootStackView.addArrangedSubview(volumeSlider)
         rootStackView.addArrangedSubview(controlButtonsStackView)
+        labelsView.addSubview(nameLabel)
+        labelsView.addSubview(subtitleLabel)
         controlButtonsStackView.addArrangedSubview(previousButton)
         controlButtonsStackView.addArrangedSubview(playPauseButton)
         controlButtonsStackView.addArrangedSubview(nextButton)
         
         // Add control buttons' actions
+        volumeSlider.addTarget(self, action: #selector(didSlideSlider), for: .valueChanged)
         nextButton.addTarget(self, action: #selector(didTapNext), for: .touchUpInside)
         previousButton.addTarget(self, action: #selector(didTapPrevious), for: .touchUpInside)
         playPauseButton.addTarget(self, action: #selector(didTapPlayPause), for: .touchUpInside)
@@ -146,19 +163,43 @@ final class PlayerControlsView: UIView {
             rootStackView.trailingAnchor.constraint(equalTo: trailingAnchor),
             rootStackView.bottomAnchor.constraint(equalTo: bottomAnchor),
             rootStackView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            
+            nameLabel.topAnchor.constraint(equalTo: labelsView.topAnchor),
+            nameLabel.trailingAnchor.constraint(equalTo: labelsView.trailingAnchor),
+            nameLabel.leadingAnchor.constraint(equalTo: labelsView.leadingAnchor),
+            
+            subtitleLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 8),
+            subtitleLabel.trailingAnchor.constraint(equalTo: labelsView.trailingAnchor),
+            subtitleLabel.leadingAnchor.constraint(equalTo: labelsView.leadingAnchor),
         ])
     }
     
-    @objc private func didTapPlayPause(_ sender: UIButton) {
+    @objc private func didSlideSlider(_ slider: UISlider) {
+        delegate?.playerControlsView(self, didSlideSlider: slider.value)
+    }
+    
+    @objc private func didTapPlayPause() {
         delegate?.playerControlsViewDidTapPlayPauseButton(self)
+        self.isPlaying = !isPlaying
+        
+        // update icon
+        playPauseButton.setImage(
+            PlayerControlsView.createPlayPauseIcon(isPlaying: isPlaying),
+            for: .normal
+        )
     }
 
-    @objc private func didTapPrevious(_ sender: UIButton) {
+    @objc private func didTapPrevious() {
         delegate?.playerControlsViewDidTapBackwardButton(self)
     }
     
-    @objc private func didTapNext(_ sender: UIButton) {
+    @objc private func didTapNext() {
         delegate?.playerControlsViewDidTapForwardButton(self)
+    }
+    
+    func configure(with viewModel: PlayerControlsViewViewModel) {
+        nameLabel.text = viewModel.songName
+        subtitleLabel.text = viewModel.subtitle
     }
     
 }
@@ -175,6 +216,10 @@ extension PlayerControlsView {
                 weight: .regular
             )
         )
+    }
+    
+    private static func createPlayPauseIcon(isPlaying: Bool) -> UIImage? {
+        return createControlImage(withSystemName: isPlaying ? "pause.fill" : "play.fill")
     }
     
 }

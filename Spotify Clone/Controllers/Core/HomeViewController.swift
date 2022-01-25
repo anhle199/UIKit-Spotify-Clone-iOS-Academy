@@ -513,7 +513,7 @@ extension HomeViewController: UICollectionViewDelegate {
             navigationController?.pushViewController(playlistVC, animated: true)
             
         case .recommendedTracks:
-            PlaybackPresenter.startPlayback(from: self, track: tracks[indexPath.row])
+            PlaybackPresenter.shared.startPlayback(from: self, track: tracks[indexPath.row])
         }
     }
     

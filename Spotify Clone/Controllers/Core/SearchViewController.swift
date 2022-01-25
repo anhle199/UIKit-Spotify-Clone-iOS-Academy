@@ -273,7 +273,7 @@ extension SearchViewController: SearchResultsViewControllerDelegate {
                 navigationController?.pushViewController(playlistVC, animated: true)
                 
             case .track(let track):
-            PlaybackPresenter.startPlayback(from: self, track: track)
+            PlaybackPresenter.shared.startPlayback(from: self, track: track)
         }
     }
     
