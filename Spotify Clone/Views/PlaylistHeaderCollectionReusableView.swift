@@ -23,7 +23,6 @@ class PlaylistHeaderCollectionReusableView: UICollectionReusableView {
     private let imageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.image = UIImage(systemName: "photo")
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 5
@@ -161,7 +160,11 @@ class PlaylistHeaderCollectionReusableView: UICollectionReusableView {
         nameLabel.text = viewModel.name
         ownerLabel.text = viewModel.ownerName
         descriptionLabel.text = viewModel.description
-        imageView.sd_setImage(with: viewModel.artworkURL, completed: nil)
+        imageView.sd_setImage(
+            with: viewModel.artworkURL,
+            placeholderImage: UIImage(systemName: "photo"),
+            completed: nil
+        )
     }
     
 }

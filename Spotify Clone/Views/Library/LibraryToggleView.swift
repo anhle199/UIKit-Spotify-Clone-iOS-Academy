@@ -49,7 +49,7 @@ class LibraryToggleView: UIView {
     
     // These variables will be used to change state and position of indicator view
     // when a button is pressed
-    private var buttonState = State.playlist
+    var buttonState = State.playlist
     private var indicatorViewLeadingConstraintWhenPressingPlaylists: NSLayoutConstraint?
     private var indicatorViewLeadingConstraintWhenPressingAlbums: NSLayoutConstraint?
     

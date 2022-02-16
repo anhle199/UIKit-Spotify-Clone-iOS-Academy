@@ -29,6 +29,12 @@ class LibraryViewController: UIViewController {
         return toggleView
     }()
     
+    private let playlistRightBarButton = UIBarButtonItem(
+        barButtonSystemItem: .add,
+        target: nil,
+        action: nil
+    )
+    
     private var playlistsPageOffset: CGPoint {
         return .zero
     }
@@ -50,6 +56,20 @@ class LibraryViewController: UIViewController {
         
         setupSubviews()
         setupConstraints()
+        
+        setUpPlaylistRightBarButton()
+    }
+    
+    private func addChildren() {
+        addChild(playlistsVC)
+        pageView.addSubview(playlistsVC.view)
+        playlistsVC.view.frame = CGRect(x: 0, y: 0, width: pageView.frame.width, height: pageView.frame.height)
+        playlistsVC.didMove(toParent: self)
+        
+        addChild(albumsVC)
+        pageView.addSubview(albumsVC.view)
+        albumsVC.view.frame = CGRect(x: view.frame.width, y: 0, width: pageView.frame.width, height: pageView.frame.height)
+        albumsVC.didMove(toParent: self)
     }
     
     private func setupSubviews() {
@@ -73,16 +93,21 @@ class LibraryViewController: UIViewController {
         pageView.contentSize = CGSize(width: view.frame.width * 2, height: pageView.frame.height)
     }
     
-    private func addChildren() {
-        addChild(playlistsVC)
-        pageView.addSubview(playlistsVC.view)
-        playlistsVC.view.frame = CGRect(x: 0, y: 0, width: pageView.frame.width, height: pageView.frame.height)
-        playlistsVC.didMove(toParent: self)
-        
-        addChild(albumsVC)
-        pageView.addSubview(albumsVC.view)
-        albumsVC.view.frame = CGRect(x: view.frame.width, y: 0, width: pageView.frame.width, height: pageView.frame.height)
-        albumsVC.didMove(toParent: self)
+    private func setUpPlaylistRightBarButton() {
+        playlistRightBarButton.target = self
+        playlistRightBarButton.action = #selector(didTapAdd)
+    }
+    
+    @objc private func didTapAdd() {
+        playlistsVC.showCreatePlaylistAlert()
+    }
+    
+    private func updateBarButtons() {
+        if toggleView.buttonState == .playlist {
+            navigationItem.rightBarButtonItem = playlistRightBarButton
+        } else {
+            navigationItem.rightBarButtonItem = nil
+        }
     }
     
 }
@@ -93,8 +118,10 @@ extension LibraryViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if scrollView.contentOffset.x >= view.frame.width - 100 {
             toggleView.updateIndicatorView(for: .album)
+            updateBarButtons()
         } else {
             toggleView.updateIndicatorView(for: .playlist)
+            updateBarButtons()
         }
     }
     
