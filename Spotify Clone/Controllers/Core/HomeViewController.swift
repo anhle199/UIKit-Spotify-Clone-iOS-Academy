@@ -88,6 +88,8 @@ class HomeViewController: UIViewController {
         
         // Fetches data
         fetchData()
+        
+        addLongTapGesture()
     }
     
     // MARK: - Methods
@@ -235,6 +237,61 @@ class HomeViewController: UIViewController {
                 tracks: tracks
             )
         }
+    }
+    
+    private func addLongTapGesture() {
+        let gesture = UILongPressGestureRecognizer(target: self, action: #selector(didLongPress))
+        collectionView.addGestureRecognizer(gesture)
+    }
+    
+    @objc private func didLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else {
+            return
+        }
+        
+        let touchPoint = gesture.location(in: collectionView)
+        
+        guard let indexPath = collectionView.indexPathForItem(at: touchPoint),
+              indexPath.section == 2
+        else {
+            return
+        }
+        
+        // Get long pressed track
+        let track = tracks[indexPath.row]
+        
+        // action sheet
+        let actionSheet = UIAlertController(
+            title: track.name,
+            message: "Would you like to add this to a playlist",
+            preferredStyle: .actionSheet
+        )
+        
+        // add actions to action sheet
+        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        actionSheet.addAction(
+            UIAlertAction(title: "Add to playlist", style: .default, handler: { [weak self] _ in
+                DispatchQueue.main.async {
+                    guard let safeSelf = self else { return }
+                    
+                    let vc = LibraryPlaylistsViewController()
+                    vc.title = "Select Playlist"
+                    vc.selectionHandler = { playlist in
+                        APICaller.shared.addTrackToPlaylist(
+                            track: track,
+                            playlist: playlist
+                        ) { success in
+                            print(success ? "Added track to playlist" : "Failed to add track to playlist")
+                        }
+                    }
+                    
+                    safeSelf.present(UINavigationController(rootViewController: vc), animated: true)
+                }
+            })
+        )
+        
+        
+        present(actionSheet, animated: true)
     }
     
     private func configureModels(

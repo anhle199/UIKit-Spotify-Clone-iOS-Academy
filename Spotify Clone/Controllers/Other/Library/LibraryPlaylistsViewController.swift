@@ -9,6 +9,8 @@ import UIKit
 
 class LibraryPlaylistsViewController: UIViewController {
 
+    var selectionHandler: ((Playlist) -> Void)?
+    
     private var playlists = [Playlist]()
     
     private let noPlaylistsView: ActionLabelView = {
@@ -39,6 +41,14 @@ class LibraryPlaylistsViewController: UIViewController {
         setupViews()
         setupConstraints()
         fetchData()
+        
+        if selectionHandler != nil {
+            navigationItem.leftBarButtonItem = UIBarButtonItem(
+                barButtonSystemItem: .close,
+                target: self,
+                action: #selector(didTapClose)
+            )
+        }
     }
     
     private func setupViews() {
@@ -96,6 +106,10 @@ class LibraryPlaylistsViewController: UIViewController {
             tableView.isHidden = false
         }
     }
+    
+    @objc private func didTapClose() {
+        dismiss(animated: true, completion: nil)
+    }
 
     func showCreatePlaylistAlert() {
         let alert = UIAlertController(
@@ -147,8 +161,14 @@ extension LibraryPlaylistsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
-        let playlistVC = PlaylistViewController(playlist: playlists[indexPath.row])
-        navigationController?.pushViewController(playlistVC, animated: true)
+        let playlist = playlists[indexPath.row]
+        if let selectionHandler = selectionHandler {
+            selectionHandler(playlist)
+            dismiss(animated: true, completion: nil)  // dismiss selection of playlist view
+        } else {
+            let playlistVC = PlaylistViewController(playlist: playlist)
+            navigationController?.pushViewController(playlistVC, animated: true)
+        }
     }
 }
 
@@ -181,6 +201,11 @@ extension LibraryPlaylistsViewController: UITableViewDataSource {
                 imageURL: URL(string: playlist.images.first?.url ?? "")
             )
         )
+        
+        // remove right chevron when selecting a playlist to add track to that
+        if selectionHandler != nil {
+            cell.accessoryType = .none
+        }
         
         return cell
     }
