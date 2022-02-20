@@ -129,6 +129,7 @@ extension LibraryAlbumsViewController: ActionLabelViewDelegate {
 extension LibraryAlbumsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        HapticsManager.shared.vibrateForSelection()
         
         let albumVC = AlbumViewController(album: albums[indexPath.row])
         navigationController?.pushViewController(albumVC, animated: true)
