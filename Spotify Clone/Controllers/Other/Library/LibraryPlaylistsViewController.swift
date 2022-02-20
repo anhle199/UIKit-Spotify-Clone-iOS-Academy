@@ -167,6 +167,8 @@ extension LibraryPlaylistsViewController: UITableViewDelegate {
             dismiss(animated: true, completion: nil)  // dismiss selection of playlist view
         } else {
             let playlistVC = PlaylistViewController(playlist: playlist)
+            playlistVC.isOwner = true
+            
             navigationController?.pushViewController(playlistVC, animated: true)
         }
     }

@@ -13,6 +13,9 @@ class PlaylistViewController: UIViewController {
     
     private let playlist: Playlist
     
+    // This property determines to show delete option if you own that playlist
+    var isOwner = false
+    
     private let collectionView: UICollectionView = {
         let collectionView = UICollectionView(
             frame: .zero,
@@ -74,6 +77,13 @@ class PlaylistViewController: UIViewController {
             target: self,
             action: #selector(didTapShare)
         )
+        
+        // Add long press gesture for deletion option
+        let gesture = UILongPressGestureRecognizer(
+            target: self,
+            action: #selector(didLongPress)
+        )
+        collectionView.addGestureRecognizer(gesture)
     }
     
     override func viewDidLayoutSubviews() {
@@ -96,6 +106,48 @@ class PlaylistViewController: UIViewController {
         activityVC.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
         
         present(activityVC, animated: true, completion: nil)
+    }
+    
+    @objc private func didLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        
+        let touchPoint = gesture.location(in: collectionView)
+        guard let indexPath = collectionView.indexPathForItem(at: touchPoint) else {
+            return
+        }
+        
+        let trackToDelete = tracks[indexPath.row]
+        
+        let actionSheet = UIAlertController(
+            title: trackToDelete.name,
+            message: "Would you like to remove this from the playlist?",
+            preferredStyle: .actionSheet
+        )
+        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        actionSheet.addAction(
+            UIAlertAction(
+                title: "Remove",
+                style: .destructive,
+                handler: { [weak self] _ in
+                    guard let safeSelf = self else { return }
+                    
+                    APICaller.shared.removeTrackFromPlaylist(
+                        track: trackToDelete,
+                        playlist: safeSelf.playlist
+                    ) { success in
+                        DispatchQueue.main.async {
+                            if success {
+                                safeSelf.tracks.remove(at: indexPath.row)
+                                safeSelf.viewModels.remove(at: indexPath.row)
+                                safeSelf.collectionView.reloadData()
+                            }
+                        }
+                    }
+                }
+            )
+        )
+        
+        present(actionSheet, animated: true)
     }
     
     private func fetchData() {

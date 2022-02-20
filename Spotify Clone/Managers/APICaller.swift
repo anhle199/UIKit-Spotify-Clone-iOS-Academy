@@ -216,7 +216,50 @@ final class APICaller {
         playlist: Playlist,
         completion: @escaping (Bool) -> Void
     ) {
-        
+        makeRequest(
+            with: URL(string: "\(Constants.baseAPIURL)/playlists/\(playlist.id)/tracks"),
+            type: .DELETE
+        ) { baseRequest in
+            
+            let bodyData = [
+                "tracks": [
+                    [ "uri": "spotify:track:\(track.id)" ],
+                ],
+            ]
+            
+            var request = baseRequest
+            request.httpBody = try? JSONSerialization.data(
+                withJSONObject: bodyData,
+                options: .fragmentsAllowed
+            )
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            let task = URLSession.shared.dataTask(with: request) { data, _, error in
+                guard let data = data, error == nil else {
+                    completion(false)
+                    return
+                }
+                
+                do {
+                    let result = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
+                    
+                    if let response = result as? [String: Any],
+                       let _ = response["snapshot_id"] as? String {
+                        
+                        completion(true)
+                    } else {
+                        print("ERROR - createPlaylist: Failed to get snapshot_id")
+                        completion(false)
+                    }
+                    
+                } catch {
+                    print("ERROR - addTrackToPlaylist: \(error.localizedDescription)")
+                    completion(false)
+                }
+            }
+            
+            task.resume()
+        }
     }
     
     
@@ -465,6 +508,7 @@ final class APICaller {
     private enum HTTPMethod: String {
         case GET
         case POST
+        case DELETE
     }
     
     private func makeRequest(
