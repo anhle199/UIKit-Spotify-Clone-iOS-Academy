@@ -203,5 +203,14 @@ final class AuthManager {
             UserDefaults.standard.setValue(refreshToken, forKey: "refresh_token")
         }
     }
+ 
+    public func signOut(completion: @escaping (Bool) -> Void) {
+        // Remove all caches
+        UserDefaults.standard.setValue(nil, forKey: "access_token")
+        UserDefaults.standard.setValue(nil, forKey: "expirationDate")
+        UserDefaults.standard.setValue(nil, forKey: "refresh_token")
+        
+        completion(true)
+    }
     
 }

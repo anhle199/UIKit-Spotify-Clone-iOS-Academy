@@ -50,9 +50,6 @@ class TabBarViewController: UITabBarController {
             [homeNavigationVC, searchNavigationVC, libNavigationVC],
             animated: true
         )
-        
-        // testing, needs to remove
-        selectedIndex = 2
     }
 
 }
