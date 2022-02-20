@@ -51,6 +51,60 @@ final class APICaller {
         }
     }
     
+    public func getCurrentUserAlbums(
+        completion: @escaping (Result<[Album], Error>) -> Void
+    ) {
+        makeRequest(
+            with: URL(string: "\(Constants.baseAPIURL)/me/albums?limit=50"),
+            type: .GET
+        ) { request in
+            let task = URLSession.shared.dataTask(with: request) { data, _, error in
+                guard let data = data, error == nil else {
+                    completion(.failure(APIError.failedToGetData))
+                    return
+                }
+                
+                do {
+                    let result = try JSONDecoder().decode(
+                        LibraryAlbumsResponse.self,
+                        from: data
+                    )
+                    
+                    let albums = result.items.compactMap({ $0.album })
+                    completion(.success(albums))
+                } catch {
+                    completion(.failure(error))
+                }
+            }
+            
+            task.resume()
+        }
+    }
+    
+    public func saveAlbum(album: Album, completion: @escaping (Bool) -> Void) {
+        makeRequest(
+            with: URL(string: "\(Constants.baseAPIURL)/me/albums?ids=\(album.id)"),
+            type: .PUT
+        ) { baseRequest in
+            var request = baseRequest
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                guard let code = (response as? HTTPURLResponse)?.statusCode,
+                      data != nil,
+                      error == nil
+                else {
+                    completion(false)
+                    return
+                }
+                
+                completion(code == 200)
+            }
+            
+            task.resume()
+        }
+    }
+    
     
     // MARK: - Playlists
     
@@ -507,6 +561,7 @@ final class APICaller {
     
     private enum HTTPMethod: String {
         case GET
+        case PUT
         case POST
         case DELETE
     }

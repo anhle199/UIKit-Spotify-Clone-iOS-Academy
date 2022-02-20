@@ -69,6 +69,41 @@ class AlbumViewController: UIViewController {
         
         // fetches data
         fetchData()
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: "ellipsis.circle"),
+            style: .plain,
+            target: self,
+            action: #selector(didTapAction))
+    }
+    
+    @objc private func didTapAction() {
+        let actionSheet = UIAlertController(
+            title: album.name,
+            message: "Actions",
+            preferredStyle: .actionSheet
+        )
+        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        actionSheet.addAction(
+            UIAlertAction(
+                title: "Save Album",
+                style: .default,
+                handler: { [weak self] _ in
+                    guard let safeSelf = self else { return }
+                    
+                    APICaller.shared.saveAlbum(album: safeSelf.album) { success in
+                        if success {
+                            NotificationCenter.default.post(
+                                name: .albumSavedNotification,
+                                object: nil
+                            )
+                        }
+                    }
+                }
+            )
+        )
+        
+        present(actionSheet, animated: true)
     }
     
     override func viewDidLayoutSubviews() {
